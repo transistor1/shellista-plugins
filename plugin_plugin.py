@@ -73,7 +73,8 @@ def plugin_list(wildcard='*'):
     #TODO: Make this better
     wildcard = wildcard.replace('*','.*')
     for plugin in plugins:
-        print 'Name:{0}\nDescription: {1}\n\n'.format(plugin.name, plugin.descripton)
+        if re.match(wildcard, plugin):
+            print 'Name:{0}\nDescription: {1}\n\n'.format(plugin.name, plugin.descripton)
 
 def plugin_install(plugin_name):
     #TODO: Fix this ugly directory hack. Quick n dirty
@@ -99,14 +100,17 @@ def main(self, line):
         command = args[0]
         args = args[1:]
 
-        if command == 'list':
-            plugin_list(*args)
-        elif command == 'install':
-            plugin_install(*args)
-        elif command == 'update':
-            plugin_update(*args)
-        elif command == 'remove':
-            plugin_remove(*args)
+        try:
+            if command == 'list':
+                plugin_list(*args)
+            elif command == 'install':
+                plugin_install(*args)
+            elif command == 'update':
+                plugin_update(*args)
+            elif command == 'remove':
+                plugin_remove(*args)
+        except Exception as e:
+            print 'Error: {0}'.format(e)
 
 
 
