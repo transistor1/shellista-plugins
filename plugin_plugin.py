@@ -58,6 +58,7 @@ class Plugins(list):
                 plugin = self.plugin_factory.parse(line)
                 self.append(plugin)
 
+print os.getcwd()
 plugins = None
 with PluginFile('plugin_urls.txt','r') as plugin_file:
     plugins = Plugins(plugin_file, PipePluginFactory())
@@ -106,13 +107,5 @@ def main(self, line):
         elif command == 'remove':
             plugin_remove(*args)
 
-        #parser = argparse.ArgumentParser(prog='plugin'
-        #                                 , usage='plugin [list|install|update|remove]'
-        #                                 , description="Perform operations on plugins")
 
-        #parser.add_argument('url', type=str, nargs='?', help='URL to push to')
-        #parser.add_argument('-u', metavar='username[:password]', type=str, required=False, help='username[:password]')
-        #result = parser.parse_args(args)
-
-        #parser.add_argument('url', type=str, nargs='?', help='URL to push to')
 
