@@ -82,7 +82,7 @@ def plugin_install(plugin_name):
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
-                os.mkdir(os.path.append(os.path.join(plugin_folder,'..'),plugin_name))
+                os.mkdir(os.path.join(os.path.join(plugin_folder,'..'),plugin_name))
                 git.do_git('clone ' + plugin.git_url)
     else:
         print 'Already installed'
