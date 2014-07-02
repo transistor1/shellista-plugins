@@ -8,7 +8,7 @@ from ... tools.toolbox import bash
 
 alias=['plugins']
 
-plugin_folder = os.pardir(os.path.abspath(__file__))
+plugin_folder = os.path.dirname(os.path.abspath(__file__))
 
 def _is_plugin_installed(module_name):
     #Quick-n-dirty hack to check which modules are installed.
