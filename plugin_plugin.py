@@ -74,7 +74,7 @@ def plugin_list(wildcard='*'):
     wildcard = wildcard.replace('*','.*')
     for plugin in plugins:
         if re.match(wildcard, plugin.name):
-            print 'Name:{0}\nDescription: {1}\n\n'.format(plugin.name, plugin.description)
+            print 'Name:{0}\n- Description: {1}'.format(plugin.name, plugin.description)
 
 def plugin_install(plugin_name):
     #TODO: Fix this ugly directory hack. Quick n dirty
