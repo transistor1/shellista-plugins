@@ -10,8 +10,9 @@ from ... tools.toolbox import bash
 
 alias=['plugins']
 shellista = sys.modules['__main__']
-
-plugin_folder = os.path.join(os.path.abspath(os.path.dirname(shellista.__file__)),'plugins','extensions')
+shellista_dir = os.path.abspath(os.path.dirname(shellista.__file__))
+plugin_folder = os.path.join(shellista_dir,'plugins','extensions')
+sys.path.append(shellista_dir)
 
 def _is_plugin_installed(module_name):
     #Quick-n-dirty hack to check which modules are installed.
