@@ -8,10 +8,12 @@ from ... tools.toolbox import bash
 
 alias=['plugins']
 
+plugin_folder = os.pardir(os.path.abspath(__file__))
+
 def _is_plugin_installed(module_name):
     #Quick-n-dirty hack to check which modules are installed.
     #TODO: Fix this!!!
-    subdirs = os.walk('..').next()[1] #Get dirnames
+    subdirs = os.walk(os.path.join(plugin_folder,'..')).next()[1] #Get dirnames
     if module_name in subdirs:
        return True
     return False
@@ -58,9 +60,8 @@ class Plugins(list):
                 plugin = self.plugin_factory.parse(line)
                 self.append(plugin)
 
-print os.getcwd()
 plugins = None
-with PluginFile('plugin_urls.txt','r') as plugin_file:
+with PluginFile(os.path.join(plugin_folder,'plugin_urls.txt'),'r') as plugin_file:
     plugins = Plugins(plugin_file, PipePluginFactory())
     plugins.parse_file()
 
@@ -80,7 +81,7 @@ def plugin_install(plugin_name):
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
-                os.mkdir(os.path.append('..',plugin_name))
+                os.mkdir(os.path.append(os.path.join(plugin_folder,'..'),plugin_name))
                 git.do_git('clone ' + plugin.git_url)
     else:
         print 'Already installed'
