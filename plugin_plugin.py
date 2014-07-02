@@ -93,7 +93,7 @@ def plugin_remove(plugin_name):
     raise NotImplementedError()
 
 def main(self, line):
-    args = re.split('\s+')
+    args = re.split('\s+', line)
     if len(args) > 0:
 
         command = args[0]
