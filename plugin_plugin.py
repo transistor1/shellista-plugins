@@ -86,7 +86,7 @@ def _patch_shellista(self):
     filenames = [x for x in os.walk('.').next()[2] if x.lower().endswith('_plugin.py')]
     for path in filenames:
         mod_name = os.path.splitext(path)[0].lower().replace('_plugin','')
-        full_name = '{0}_plugin'.format(mod_name)
+        full_name = 'plugins.extensions.{0}.{0}_plugin'.format(mod_name)
         lib = importlib.import_module(full_name)
         name = 'do_{0}'.format(mod_name)
         if self.addCmdList(path.lower()):
@@ -104,6 +104,7 @@ def plugin_install(self, plugin_name):
                     os.mkdir(new_plugin_path)
                     os.chdir(new_plugin_path)
                     git.do_git('clone ' + plugin.git_url)
+                    os.chdir(cwd)
                     _patch_shellista(self)
                 finally:
                     os.chdir(cwd)
