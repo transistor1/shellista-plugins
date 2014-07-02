@@ -37,7 +37,7 @@ class PipePluginFactory(PluginFactory):
     def parse(self, line):
         items = string.split(line, '|')
         new_plugin = Plugin(name=items[0], download_name=items[1], description=items[2], git_url=items[3])
-        new_plugin.is_installed = _is_plugin_installed(new_plugin.module_name)
+        new_plugin.is_installed = _is_plugin_installed(new_plugin.download_name)
         return new_plugin
 
 class PluginFile(file):
