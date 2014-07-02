@@ -3,7 +3,7 @@ import argparse
 import re
 import os
 
-from .. import git
+from .. import git.git_plugin as git
 from ... tools.toolbox import bash
 
 alias=['plugins']
