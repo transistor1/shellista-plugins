@@ -68,7 +68,7 @@ with PluginFile(os.path.join(plugin_folder,'plugin_urls.txt'),'r') as plugin_fil
 def usage():
     print 'plugin [list [wildcard]|install <module name>|update <module name>]'
 
-def plugin_list(wildcard):
+def plugin_list(wildcard='*'):
     #TODO: Enhance silly wildcard implementation
     #TODO: Make this better
     wildcard = wildcard.replace('*','.*')
