@@ -82,7 +82,7 @@ def plugin_list(self, wildcard='*'):
 def _patch_shellista(self):
     filenames = [x for x in os.walk('.').next()[2] if x.lower().endswith('_plugin.py')]
     for path in filenames:
-        lib = importlib.import_module(path)
+        lib = importlib.import_module(os.path.splitext(path)[0])
         name = 'do_'+path.lower().replace('_plugin','')
         if self.addCmdList(path.lower()):
             setattr(shellista.Shellista, name, self._CmdGenerator(lib.main))
@@ -93,13 +93,15 @@ def plugin_install(self, plugin_name):
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
-                new_plugin_path = os.path.join(os.path.join(plugin_folder,'..'),plugin_name)
                 cwd = os.getcwd()
-                os.mkdir(new_plugin_path)
-                os.chdir(new_plugin_path)
-                git.do_git('clone ' + plugin.git_url)
-                _patch_shellista(self)
-                os.chdir(cwd)
+                try:
+                    new_plugin_path = os.path.join(os.path.join(plugin_folder,'..'),plugin_name)
+                    os.mkdir(new_plugin_path)
+                    os.chdir(new_plugin_path)
+                    git.do_git('clone ' + plugin.git_url)
+                    _patch_shellista(self)
+                finally:
+                    os.chdir(cwd)
     else:
         print 'Already installed'
 
