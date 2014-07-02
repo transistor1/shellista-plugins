@@ -82,8 +82,10 @@ def plugin_list(self, wildcard='*'):
 def _patch_shellista(self):
     filenames = [x for x in os.walk('.').next()[2] if x.lower().endswith('_plugin.py')]
     for path in filenames:
-        lib = importlib.import_module(os.path.splitext(path)[0])
-        name = 'do_'+path.lower().replace('_plugin','')
+        mod_name = os.path.splitext(path)[0].lower().replace('_plugin','')
+        full_name = 'plugins.extensions.{0}.{0}_plugin'.format(mod_name)
+        lib = importlib.import_module(full_name)
+        name = 'do_{0}'.format(mod_name)
         if self.addCmdList(path.lower()):
             setattr(shellista.Shellista, name, self._CmdGenerator(lib.main))
 
