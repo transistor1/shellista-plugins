@@ -1,3 +1,5 @@
+'''usage: plugin [list|install|update|remove]'''
+
 import string
 import argparse
 import re
@@ -120,7 +122,7 @@ def plugin_remove(plugin_name):
 
 def main(self, line):
     args = re.split('\s+', line)
-    if len(args) > 0:
+    if len(args) > 0 and args[0]:
 
         command = args[0]
         args = args[1:]
@@ -136,6 +138,7 @@ def main(self, line):
                 plugin_remove(*args)
         except Exception as e:
             print 'Error: {0}'.format(e)
-
+    else:
+        usage()
 
 
