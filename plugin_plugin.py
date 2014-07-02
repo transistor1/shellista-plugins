@@ -2,11 +2,13 @@ import string
 import argparse
 import re
 import os
+import importlib
 
 from .. git import git_plugin as git
 from ... tools.toolbox import bash
 
 alias=['plugins']
+shellista = sys.modules['__main__']
 
 plugin_folder = os.path.dirname(os.path.abspath(__file__))
 
@@ -68,7 +70,7 @@ with PluginFile(os.path.join(plugin_folder,'plugin_urls.txt'),'r') as plugin_fil
 def usage():
     print 'plugin [list [wildcard]|install <module name>|update <module name>]'
 
-def plugin_list(wildcard='*'):
+def plugin_list(self, wildcard='*'):
     #TODO: Enhance silly wildcard implementation
     #TODO: Make this better
     wildcard = wildcard.replace('*','.*')
@@ -76,7 +78,15 @@ def plugin_list(wildcard='*'):
         if re.match(wildcard, plugin.name):
             print 'Name:{0}\n- Description: {1}'.format(plugin.name, plugin.description)
 
-def plugin_install(plugin_name):
+def _patch_shellista(self):
+    filenames = [x for x in os.walk('.').next()[2] if x.lower().endswith('_plugin.py')]
+    for path in filenames:
+        lib = importlib.import_module(path)
+        name = 'do_'+path.lower().replace('_plugin','')
+        if self.addCmdList(path.lower()):
+            setattr(shellista.Shellista, name, self._CmdGenerator(lib.main))
+
+def plugin_install(self, plugin_name):
     #TODO: Fix this ugly directory hack. Quick n dirty
     #TODO: Plugins should be a hash, not a list
     if not _is_plugin_installed(plugin_name):
@@ -87,6 +97,7 @@ def plugin_install(plugin_name):
                 os.mkdir(new_plugin_path)
                 os.chdir(new_plugin_path)
                 git.do_git('clone ' + plugin.git_url)
+                _patch_shellista(self)
                 os.chdir(cwd)
     else:
         print 'Already installed'
@@ -106,9 +117,9 @@ def main(self, line):
 
         try:
             if command == 'list':
-                plugin_list(*args)
+                plugin_list(self, *args)
             elif command == 'install':
-                plugin_install(*args)
+                plugin_install(self, *args)
             elif command == 'update':
                 plugin_update(*args)
             elif command == 'remove':
