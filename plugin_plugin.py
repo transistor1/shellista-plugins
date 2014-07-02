@@ -11,12 +11,12 @@ from ... tools.toolbox import bash
 alias=['plugins']
 shellista = sys.modules['__main__']
 
-plugin_folder = os.path.dirname(os.path.abspath(__file__))
+plugin_folder = os.path.join(os.path.abspath(os.path.dirname(shellista.__file__)),'plugins','extensions')
 
 def _is_plugin_installed(module_name):
     #Quick-n-dirty hack to check which modules are installed.
     #TODO: Fix this!!!
-    subdirs = os.walk(os.path.join(plugin_folder,'..')).next()[1] #Get dirnames
+    subdirs = os.walk(plugin_folder).next()[1] #Get dirnames
     if module_name in subdirs:
        return True
     return False
@@ -64,7 +64,8 @@ class Plugins(list):
                 self.append(plugin)
 
 plugins = None
-with PluginFile(os.path.join(plugin_folder,'plugin_urls.txt'),'r') as plugin_file:
+with PluginFile(os.path.join(os.path.dirname(os.path.abspath(__file__))
+                    ,'plugin_urls.txt'),'r') as plugin_file:
     plugins = Plugins(plugin_file, PipePluginFactory())
     plugins.parse_file()
 
@@ -80,6 +81,8 @@ def plugin_list(self, wildcard='*'):
             print 'Name:{0}\n- Description: {1}'.format(plugin.name, plugin.description)
 
 def _patch_shellista(self):
+    #TODO: Expose patch logic in Shellista class so we can use it here
+    #This is just a temporary fix to get this working now
     filenames = [x for x in os.walk('.').next()[2] if x.lower().endswith('_plugin.py')]
     for path in filenames:
         mod_name = os.path.splitext(path)[0].lower().replace('_plugin','')
@@ -97,7 +100,7 @@ def plugin_install(self, plugin_name):
             if plugin.name == plugin_name:
                 cwd = os.getcwd()
                 try:
-                    new_plugin_path = os.path.join(os.path.join(plugin_folder,'..'),plugin_name)
+                    new_plugin_path = os.path.join(plugin_folder, plugin_name)
                     os.mkdir(new_plugin_path)
                     os.chdir(new_plugin_path)
                     git.do_git('clone ' + plugin.git_url)
