@@ -1,0 +1,6 @@
+#Name|Module Download Name|Description|Git URL
+editor|editor|Open a file in the Pythonista editor|https://github.com/transistor1/shellista-editor.git
+git|git|A subset of Git commands for handling Git repositories|https://github.com/transistor1/shellista-git.git
+untgz|untgz|Untar and ungzip a file in a single command|https://github.com/transistor1/shellista-untgz.git
+touch|touch|Create a blank file or update the file's last modified date; similar to Linux touch|https://github.com/transistor1/shellista-touch.git
+plugin|plugin|The Shellista plugins plugin - download and update Shellista plugins|https://github.com/transistor1/shellista-plugins.git
