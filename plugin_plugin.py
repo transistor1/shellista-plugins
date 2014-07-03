@@ -96,7 +96,6 @@ def _patch_shellista(self):
             setattr(shellista.Shellista, name, self._CmdGenerator(lib.main))
 
 def plugin_install(self, plugin_name):
-    #TODO: Fix this ugly directory hack. Quick n dirty
     #TODO: Plugins should be a hash, not a list
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
@@ -108,7 +107,14 @@ def plugin_install(self, plugin_name):
                     os.chdir(new_plugin_path)
                     git.do_git('clone ' + plugin.git_url)
                     os.chdir(cwd)
-                    _patch_shellista(self)
+                    #_patch_shellista(self)
+
+                    filenames = [x for x in os.walk(new_plugin_path).next()[2] if x.lower().endswith('_plugin.py')]
+                    for path in filenames:
+                        (path, ext) = os.path.splitext(path)
+                        #relpath = os.path.relpath(new_plugin_path, os.path.dirname(os.path.abspath(shellista.__file__)))
+                        self._hook_plugin_main(new_plugin_path, path)
+                        
                 finally:
                     os.chdir(cwd)
     else:
