@@ -100,7 +100,6 @@ def plugin_install(self, plugin_name):
                     for path in filenames:
                         (path, ext) = os.path.splitext(path)
                         relpath = os.path.relpath(new_plugin_path, shellista_dir)
-                        print 'RELPATH: ' + relpath
                         self._hook_plugin_main(relpath, path)
                         
                 finally:
