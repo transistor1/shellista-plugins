@@ -14,7 +14,9 @@ alias=['plugins']
 shellista = sys.modules['__main__']
 shellista_dir = os.path.abspath(os.path.dirname(shellista.__file__))
 plugin_folder = os.path.join(shellista_dir,'plugins','extensions')
-sys.path.append(shellista_dir)
+print "SHELLISTA DIR:" + shellista_dir
+print "PLUGIN DIR:" + plugin_folder
+
 
 def _is_plugin_installed(module_name):
     #Quick-n-dirty hack to check which modules are installed.
@@ -83,18 +85,6 @@ def plugin_list(self, wildcard='*'):
         if re.match(wildcard, plugin.name):
             print 'Name:{0}\n- Description: {1}'.format(plugin.name, plugin.description)
 
-def _patch_shellista(self):
-    #TODO: Expose patch logic in Shellista class so we can use it here
-    #This is just a temporary fix to get this working now
-    filenames = [x for x in os.walk('.').next()[2] if x.lower().endswith('_plugin.py')]
-    for path in filenames:
-        mod_name = os.path.splitext(path)[0].lower().replace('_plugin','')
-        full_name = 'plugins.extensions.{0}.{0}_plugin'.format(mod_name)
-        lib = importlib.import_module(full_name)
-        name = 'do_{0}'.format(mod_name)
-        if self.addCmdList(path.lower()):
-            setattr(shellista.Shellista, name, self._CmdGenerator(lib.main))
-
 def plugin_install(self, plugin_name):
     #TODO: Plugins should be a hash, not a list
     if not _is_plugin_installed(plugin_name):
@@ -112,8 +102,9 @@ def plugin_install(self, plugin_name):
                     filenames = [x for x in os.walk(new_plugin_path).next()[2] if x.lower().endswith('_plugin.py')]
                     for path in filenames:
                         (path, ext) = os.path.splitext(path)
-                        #relpath = os.path.relpath(new_plugin_path, os.path.dirname(os.path.abspath(shellista.__file__)))
-                        self._hook_plugin_main(new_plugin_path, path)
+                        relpath = os.path.relpath(new_plugin_path, shellista_dir)
+                        print 'RELPATH: ' + relpath
+                        self._hook_plugin_main(relpath, path)
                         
                 finally:
                     os.chdir(cwd)
