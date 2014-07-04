@@ -20,13 +20,26 @@ shellista_dir = os.path.abspath(os.path.dirname(shellista.__file__))
 plugin_folder = os.path.join(shellista_dir,'plugins','extensions')
 plugins = None
 
-def _is_plugin_installed(module_name):
+def _get_installed_plugins():
     #Quick-n-dirty hack to check which modules are installed.
-    #TODO: Fix this!!!
-    subdirs = os.walk(plugin_folder).next()[1] #Get dirnames
-    if module_name in subdirs:
+    #Returns names of installed plugins
+    #TODO: Fix this!!! (how?)
+    return os.walk(plugin_folder).next()[1] #Get dirnames
+
+def _is_plugin_installed(module_name):
+    installed = _get_installed_plugins()
+    if module_name in installed:
         return True
     return False
+    
+def _get_plugin_path_name(plugin_name):
+    #Return the path of a plugin, whether it currently
+    #exists or not.
+    #This could possibly be enhanced in the future
+    #So that plugins don't have to specifically be
+    #under extensions
+    return path.join(plugin_folder, plugin_name)
+
 
 @contextlib.contextmanager
 def _context_chdir(new_path, create_path=False):
@@ -36,6 +49,14 @@ def _context_chdir(new_path, create_path=False):
     os.chdir(new_path)
     yield
     os.chdir(os._old_path)
+
+#Get available plugins from plugin_urls.txt
+def _enumerate_plugins():
+    with PluginFile(os.path.join(os.path.dirname(os.path.abspath(__file__))
+                        ,'plugin_urls.txt'),'r') as plugin_file:
+        global plugins
+        plugins = Plugins(plugin_file, PipePluginFactory())
+        plugins.parse_file()
 
 class Plugin():
     '''Represents a single plugin'''
@@ -64,8 +85,13 @@ class PipePluginFactory(PluginFactory):
         Plugin()s'''
     def parse(self, line):
         items = string.split(line, '|')
-        new_plugin = Plugin(name=items[0], download_name=items[1], description=items[2], git_url=items[3])
-        new_plugin.is_installed = _is_plugin_installed(new_plugin.download_name)
+        new_plugin = Plugin(
+                    name=items[0], 
+                    download_name=items[1], 
+                    description=items[2], 
+                    git_url=items[3],
+                    is_installed = _is_plugin_installed(items[1]))
+                    
         return new_plugin
 
 class PluginFile(file):
@@ -101,14 +127,19 @@ def plugin_list(self, wildcard='*'):
     wildcard = wildcard.replace('*','.*')
     for plugin in plugins:
         if re.match(wildcard, plugin.name):
-            print 'Name:{0}\n- Description: {1}'.format(plugin.name, plugin.description)
+            print 'Name:{0}{2}\n- Description: {1}'.format(
+                                    plugin.name,
+                                    plugin.description,
+                                    ' ** Installed' if plugin.is_installed
+                                        else '')
 
 def plugin_install(self, plugin_name):
     #TODO: Plugins should be a hash, not a list
+    #TODO: Implement wildcard match
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
-                new_plugin_path = os.path.join(plugin_folder, plugin_name)
+                new_plugin_path = _get_plugin_path_name(plugin_name)
                 if not os.exists(new_plugin_path):
                     os.mkdir(new_plugin_path)
                 with _context_chdir(new_plugin_path):
@@ -121,13 +152,33 @@ def plugin_install(self, plugin_name):
                     (path, ext) = os.path.splitext(path)
                     relpath = os.path.relpath(new_plugin_path, shellista_dir)
                     self._hook_plugin_main(relpath, path)
+                    
+                print 'Successfully installed {0}'.format(plugin_name)
     else:
-        print 'Already installed'
+        print 'Plugin: {0} already installed. Use update to download latest'.format(plugin_name)
 
-def plugin_update(plugin_name):
-    raise NotImplementedError('Not implemented')
 
+def _do_plugin_update(plugin_name):
+    if _is_plugin_installed(plugin_name):
+        with _context_chdir(_get_plugin_path_name(plugin_name)):
+            git.do_git('pull')
+            return True
+    return False
+        
+def plugin_update(self, plugin_name = None):
+    '''Update a plugin, or pass None to update all plugins'''
+    #TODO: Implement wildcard match
+    if plugin_name:
+        to_update = [plugin_name]
+    else:
+        to_update = _get_installed_plugins()
+
+    for plugin in to_update:
+        if _do_plugin_update(plugin):
+            print 'Successfully updated {0}'.format(plugin_name)
+    
 def plugin_remove(plugin_name):
+    '''Remove a plugin'''
     raise NotImplementedError('Not implemented')
 
 def main(self, line):
@@ -146,13 +197,14 @@ def main(self, line):
                 plugin_update(*args)
             elif command == 'remove':
                 plugin_remove(*args)
+            else:
+                usage()
         except Exception as e:
+            raise
             print 'Error: {0}'.format(e)
     else:
         usage()
 
 #Enumerate all the available plugins on startup.
-with PluginFile(os.path.join(os.path.dirname(os.path.abspath(__file__))
-                    ,'plugin_urls.txt'),'r') as plugin_file:
-    plugins = Plugins(plugin_file, PipePluginFactory())
-    plugins.parse_file()
+_enumerate_plugins()
+
