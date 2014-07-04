@@ -38,7 +38,7 @@ def _get_plugin_path_name(plugin_name):
     #This could possibly be enhanced in the future
     #So that plugins don't have to specifically be
     #under extensions
-    return path.join(plugin_folder, plugin_name)
+    return os.path.join(plugin_folder, plugin_name)
 
 
 @contextlib.contextmanager
