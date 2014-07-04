@@ -177,7 +177,7 @@ def plugin_update(self, plugin_name = None):
         if _do_plugin_update(plugin):
             print 'Successfully updated {0}'.format(plugin_name)
     
-def plugin_remove(plugin_name):
+def plugin_remove(self, plugin_name):
     '''Remove a plugin'''
     raise NotImplementedError('Not implemented')
 
@@ -194,9 +194,9 @@ def main(self, line):
             elif command == 'install':
                 plugin_install(self, *args)
             elif command == 'update':
-                plugin_update(*args)
+                plugin_update(self, *args)
             elif command == 'remove':
-                plugin_remove(*args)
+                plugin_remove(self, *args)
             else:
                 usage()
         except Exception as e:
