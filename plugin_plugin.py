@@ -1,4 +1,7 @@
-'''usage: plugin [list|install|update|remove]'''
+'''
+plugin:
+    Download and update plugins for Shellista
+    usage: plugin [list|install|update|remove]'''
 
 import string
 import argparse
