@@ -84,13 +84,15 @@ class PipePluginFactory(PluginFactory):
     '''Factory for converting pipe-delimited records into
         Plugin()s'''
     def parse(self, line):
-        items = string.split(line, '|')
-        new_plugin = Plugin(
-                    name=items[0], 
-                    download_name=items[1], 
-                    description=items[2], 
-                    git_url=items[3],
-                    is_installed = _is_plugin_installed(items[1]))
+        line = line.lstrip()
+        if line and (not line.startswith('#')):
+            items = string.split(line, '|')
+            new_plugin = Plugin(
+                        name=items[0], 
+                        download_name=items[1], 
+                        description=items[2], 
+                        git_url=items[3],
+                        is_installed = _is_plugin_installed(items[1]))
                     
         return new_plugin
 
@@ -114,9 +116,8 @@ class Plugins(list):
 
     def parse_file(self):
         for line in self.plugin_file:
-            if not line.lstrip().startswith('#'):
-                plugin = self.plugin_factory.parse(line)
-                self.append(plugin)
+            plugin = self.plugin_factory.parse(line)
+            self.append(plugin)
 
 def usage():
     print 'plugin [list [wildcard]|install <module name>|update <module name>]'
@@ -200,7 +201,7 @@ def main(self, line):
             else:
                 usage()
         except Exception as e:
-            raise
+            #raise
             print 'Error: {0}'.format(e)
     else:
         usage()
