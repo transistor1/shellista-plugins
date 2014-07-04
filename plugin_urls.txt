@@ -6,4 +6,4 @@ touch|touch|Create a blank file or update the file's last modified date; similar
 plugin|plugin|The Shellista plugins plugin - download and update Shellista plugins|https://github.com/transistor1/shellista-plugins.git
 python|python|Python sub-shell plugin|https://github.com/transistor1/shellista-python.git
 ssh|ssh|SSH shell|https://github.com/briarfox/shellista-ssh.git
-pipista|pipista|Search and download modules from pypi|https://github.com/briarfox/shellista-pipista
+pipista|pipista|Search and download modules from pypi|https://github.com/briarfox/shellista-pipista.git
