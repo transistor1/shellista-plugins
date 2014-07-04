@@ -25,7 +25,7 @@ def _is_plugin_installed(module_name):
     #TODO: Fix this!!!
     subdirs = os.walk(plugin_folder).next()[1] #Get dirnames
     if module_name in subdirs:
-       return True
+        return True
     return False
 
 @contextlib.contextmanager
@@ -53,7 +53,7 @@ class PluginFactory(list):
     '''Abstract class for different plugin factories.
         Purpose of this class is to convert text into plugin
         information.
-        
+
         Class was abstracted so we can use a different type
         of update file if we outgrow pipe system'''
     def parse(self, line):
@@ -108,32 +108,27 @@ def plugin_install(self, plugin_name):
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
-                cwd = os.getcwd()
-                try:
-                    new_plugin_path = os.path.join(plugin_folder, plugin_name)
+                new_plugin_path = os.path.join(plugin_folder, plugin_name)
+                if not os.exists(new_plugin_path):
                     os.mkdir(new_plugin_path)
-                    os.chdir(new_plugin_path)
+                with _context_chdir(new_plugin_path):
                     git.do_git('clone ' + plugin.git_url)
-                    os.chdir(cwd)
-                    #_patch_shellista(self)
-
-                    filenames = [x for x in os.walk(new_plugin_path).next()[2] if x.lower().endswith('_plugin.py')]
-                    for path in filenames:
-                        (path, ext) = os.path.splitext(path)
-                        relpath = os.path.relpath(new_plugin_path, shellista_dir)
-                        self._hook_plugin_main(relpath, path)
-                except Exception as e:
-                     raise e #Rethrow
-                finally:
-                    os.chdir(cwd)
+                
+                filenames = [x for x in os.walk(new_plugin_path).next()[2]
+                                if x.lower().endswith('_plugin.py')]
+                
+                for path in filenames:
+                    (path, ext) = os.path.splitext(path)
+                    relpath = os.path.relpath(new_plugin_path, shellista_dir)
+                    self._hook_plugin_main(relpath, path)
     else:
         print 'Already installed'
 
 def plugin_update(plugin_name):
-    raise NotImplementedError()
+    raise NotImplementedError('Not implemented')
 
 def plugin_remove(plugin_name):
-    raise NotImplementedError()
+    raise NotImplementedError('Not implemented')
 
 def main(self, line):
     args = re.split('\s+', line)
@@ -161,5 +156,3 @@ with PluginFile(os.path.join(os.path.dirname(os.path.abspath(__file__))
                     ,'plugin_urls.txt'),'r') as plugin_file:
     plugins = Plugins(plugin_file, PipePluginFactory())
     plugins.parse_file()
-
-
