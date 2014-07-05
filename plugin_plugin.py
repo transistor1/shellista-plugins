@@ -144,7 +144,7 @@ def plugin_install(self, plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
                 new_plugin_path = _get_plugin_path_name(plugin_name)
-                if not os.exists(new_plugin_path):
+                if not os.path.exists(new_plugin_path):
                     os.mkdir(new_plugin_path)
                 with _context_chdir(new_plugin_path):
                     git.do_git('clone ' + plugin.git_url)
