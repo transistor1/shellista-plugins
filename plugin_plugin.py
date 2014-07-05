@@ -10,6 +10,7 @@ import os
 import importlib
 import sys
 import contextlib
+import shutil
 
 from .. git import git_plugin as git
 from ... tools.toolbox import bash
@@ -182,8 +183,15 @@ def plugin_update(self, plugin_name = None):
     
 def plugin_remove(self, plugin_name):
     '''Remove a plugin'''
-    raise NotImplementedError('Not implemented')
-
+    if plugin_name in ['plugin','git']:
+        print 'Can\'t remove "{0}" plugin.'.format(plugin_name)
+        return
+    path = _get_plugin_path_name(plugin_name)
+    del sys.modules[plugin_name]
+    del globals()[plugin_name]
+    shutil.rmtree(plugin_name)
+    print 'Plugin {0} removed.'.format(plugin_name)
+    
 def main(self, line):
     args = re.split('\s+', line)
     if len(args) > 0 and args[0]:
