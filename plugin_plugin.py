@@ -21,6 +21,21 @@ shellista_dir = os.path.abspath(os.path.dirname(shellista.__file__))
 plugin_folder = os.path.join(shellista_dir,'plugins','extensions')
 plugins = None
 
+class install_result:
+    FAIL_ALREADY_INSTALLED = -2
+    FAIL_GENERAL = -1
+    OK = 1
+
+class update_result:
+    FAIL_NOT_INSTALLED = -2
+    FAIL_GENERAL = -1
+    OK = 1
+
+class remove_result:
+    FAIL_PLUGIN_REQUIRED = -2
+    FAIL_GENERAL = -1
+    OK = 1
+
 def _get_installed_plugins():
     #Quick-n-dirty hack to check which modules are installed.
     #Returns names of installed plugins
@@ -125,21 +140,13 @@ class Plugins(list):
 def usage():
     print 'plugin [list [wildcard]|install <module name>|update <module name>]'
 
-def plugin_list(self, wildcard='*'):
-    #TODO: Enhance silly wildcard implementation
-    #TODO: Make this better
-    wildcard = wildcard.replace('*','.*')
-    for plugin in plugins:
-        if re.match(wildcard, plugin.name):
-            print 'Name:{0}{2}\n- Description: {1}'.format(
-                                    plugin.name,
-                                    plugin.description,
-                                    ' ** Installed' if plugin.is_installed
-                                        else '')
-
 def plugin_install(self, plugin_name):
     #TODO: Plugins should be a hash, not a list
     #TODO: Implement wildcard match
+
+    #TODO: Allow several installs in one call
+    results = {}
+
     if not _is_plugin_installed(plugin_name):
         for plugin in plugins:
             if plugin.name == plugin_name:
@@ -156,19 +163,19 @@ def plugin_install(self, plugin_name):
                     (path, ext) = os.path.splitext(path)
                     relpath = os.path.relpath(new_plugin_path, shellista_dir)
                     self._hook_plugin_main(relpath, path)
-                    
-                print 'Successfully installed {0}'.format(plugin_name)
-    else:
-        print 'Plugin: {0} already installed. Use update to download latest'.format(plugin_name)
 
+                results[plugin_name] = install_result.OK
+    else:
+        results[plugin_name] = install_result.FAIL_ALREADY_INSTALLED
+    return results
 
 def _do_plugin_update(plugin_name):
     if _is_plugin_installed(plugin_name):
         with _context_chdir(_get_plugin_path_name(plugin_name)):
             git.do_git('pull')
-            return True
-    return False
-        
+            return update_result.OK
+    return update_result.FAIL_NOT_INSTALLED
+
 def plugin_update(self, plugin_name = None):
     '''Update a plugin, or pass None to update all plugins'''
     #TODO: Implement wildcard match
@@ -176,22 +183,40 @@ def plugin_update(self, plugin_name = None):
         to_update = [plugin_name]
     else:
         to_update = _get_installed_plugins()
-
+    results = {}
     for plugin in to_update:
-        if _do_plugin_update(plugin):
-            print 'Successfully updated {0}'.format(plugin_name)
+        results[plugin] = _do_plugin_update(plugin)
+    return results
     
 def plugin_remove(self, plugin_name):
     '''Remove a plugin'''
+    #TODO: Allow multiple removes in one call
+    results = {}
+
     if plugin_name in ['plugin','git']:
-        print 'Can\'t remove "{0}" plugin.'.format(plugin_name)
-        return
-    path = _get_plugin_path_name(plugin_name)
-    del sys.modules[plugin_name]
-    del globals()[plugin_name]
-    shutil.rmtree(plugin_name)
-    print 'Plugin {0} removed.'.format(plugin_name)
-    
+        results[plugin_name] = remove_result.FAIL_PLUGIN_REQUIRED
+    else:
+        path = _get_plugin_path_name(plugin_name)
+
+        #Try to unload the plugin
+        delattr(shellista.Shellista, 'do_{0}'.format(plugin_name))
+
+        shutil.rmtree(path)
+        results[plugin_name] = remove_result.OK
+    return results
+
+def _display_plugin_list(self, wildcard='*'):
+    #TODO: Enhance silly wildcard implementation
+    #TODO: Make this better
+    wildcard = wildcard.replace('*','.*')
+    for plugin in plugins:
+        if re.match(wildcard, plugin.name):
+            print 'Name:{0}{2}\n- Description: {1}'.format(
+                                    plugin.name,
+                                    plugin.description,
+                                    ' ** Installed' if plugin.is_installed
+                                        else '')
+
 def main(self, line):
     args = re.split('\s+', line)
     if len(args) > 0 and args[0]:
@@ -201,13 +226,31 @@ def main(self, line):
 
         try:
             if command == 'list':
-                plugin_list(self, *args)
+                _display_plugin_list(self, *args)
+
             elif command == 'install':
-                plugin_install(self, *args)
+                results = plugin_install(self, *args)
+                for module in results.keys():
+                    print {
+                        install_result.OK: 'Successfully installed {0}',
+                        install_result.FAIL_ALREADY_INSTALLED: 'Plugin: {0} already installed. Use update to download latest'
+                    }.get(results[module], 'Failure installing {0}').format(module)
+
             elif command == 'update':
-                plugin_update(self, *args)
+                results = plugin_update(self, *args)
+                for module in results.keys():
+                    print {
+                        update_result.OK: 'Successfully updated {0}',
+                        update_result.FAIL_NOT_INSTALLED: 'Module {0} not installed; can\'t update',
+                    }.get(results[module], 'Failure updating {0}').format(module)
+
             elif command == 'remove':
-                plugin_remove(self, *args)
+                results = plugin_remove(self, *args)
+                for module in results.keys():
+                    print {
+                        remove_result.OK: 'Successfully removed {0}',
+                        remove_result.FAIL_PLUGIN_REQUIRED: 'Plugin {0} is required. Can\'t remove'
+                    }.get(results[module], 'Failure removing {0}').format(module)
             else:
                 usage()
         except Exception as e:
