@@ -204,6 +204,8 @@ def plugin_remove(self, plugin_name):
 
         #Try to unload the plugin
         delattr(shellista.Shellista, 'do_{0}'.format(plugin_name))
+        
+        #TODO: Unload aliases
 
         shutil.rmtree(path)
         _plugins[plugin_name].is_installed = False
