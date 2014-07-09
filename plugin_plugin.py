@@ -19,7 +19,7 @@ alias=['plugins']
 shellista = sys.modules['__main__']
 shellista_dir = os.path.abspath(os.path.dirname(shellista.__file__))
 plugin_folder = os.path.join(shellista_dir,'plugins','extensions')
-plugins = None
+_plugins = None
 
 class install_result:
     FAIL_ALREADY_INSTALLED = -2
@@ -70,9 +70,9 @@ def _context_chdir(new_path, create_path=False):
 def _enumerate_plugins():
     with PluginFile(os.path.join(os.path.dirname(os.path.abspath(__file__))
                         ,'plugin_urls.txt'),'r') as plugin_file:
-        global plugins
-        plugins = Plugins(plugin_file, PipePluginFactory())
-        plugins.parse_file()
+        global _plugins
+        _plugins = Plugins(plugin_file, PipePluginFactory())
+        _plugins.parse_file()
 
 class Plugin():
     '''Represents a single plugin'''
@@ -119,7 +119,7 @@ class PluginFile(file):
         future functionality is required.'''
     pass
 
-class Plugins(list):
+class Plugins(dict):
     '''Represents a collection of Plugin objects.'''
     plugin_file = None
     plugin_factory = None
@@ -129,42 +129,46 @@ class Plugins(list):
         self.plugin_factory = plugin_factory
 
     def __str__(self):
-        return self.plugins
+        return self._plugins
 
     def parse_file(self):
         for line in self.plugin_file:
             plugin = self.plugin_factory.parse(line)
             if plugin:
-                self.append(plugin)
+                self[plugin.name] = plugin
+                #self.append(plugin)
 
 def usage():
     print 'plugin [list [wildcard]|install <module name>|update <module name>]'
 
 def plugin_install(self, plugin_name):
-    #TODO: Plugins should be a hash, not a list
     #TODO: Implement wildcard match
 
     #TODO: Allow several installs in one call
     results = {}
 
     if not _is_plugin_installed(plugin_name):
-        for plugin in plugins:
-            if plugin.name == plugin_name:
-                new_plugin_path = _get_plugin_path_name(plugin_name)
-                if not os.path.exists(new_plugin_path):
-                    os.mkdir(new_plugin_path)
-                with _context_chdir(new_plugin_path):
-                    git.do_git('clone ' + plugin.git_url)
-                
-                filenames = [x for x in os.walk(new_plugin_path).next()[2]
-                                if x.lower().endswith('_plugin.py')]
-                
-                for path in filenames:
-                    (path, ext) = os.path.splitext(path)
-                    relpath = os.path.relpath(new_plugin_path, shellista_dir)
-                    self._hook_plugin_main(relpath, path)
-
-                results[plugin_name] = install_result.OK
+        if plugin_name in _plugins.keys():
+            plugin = _plugins[plugin_name]
+            
+            new_plugin_path = _get_plugin_path_name(plugin_name)
+            if not os.path.exists(new_plugin_path):
+                os.mkdir(new_plugin_path)
+            with _context_chdir(new_plugin_path):
+                git.do_git('clone ' + plugin.git_url)
+        
+            filenames = [x for x in os.walk(new_plugin_path).next()[2]
+                            if x.lower().endswith('_plugin.py')]
+        
+            for path in filenames:
+                (path, ext) = os.path.splitext(path)
+                relpath = os.path.relpath(new_plugin_path, shellista_dir)
+                self._hook_plugin_main(relpath, path)
+        
+            plugin.is_installed = True
+            results[plugin_name] = install_result.OK
+        else:
+            return install_result.FAIL_GENERAL
     else:
         results[plugin_name] = install_result.FAIL_ALREADY_INSTALLED
     return results
@@ -202,14 +206,17 @@ def plugin_remove(self, plugin_name):
         delattr(shellista.Shellista, 'do_{0}'.format(plugin_name))
 
         shutil.rmtree(path)
+        _plugins[plugin_name].is_installed = False
         results[plugin_name] = remove_result.OK
+        
     return results
 
 def _display_plugin_list(self, wildcard='*'):
     #TODO: Enhance silly wildcard implementation
     #TODO: Make this better
     wildcard = wildcard.replace('*','.*')
-    for plugin in plugins:
+    for name in sorted(_plugins):
+        plugin = _plugins[name]
         if re.match(wildcard, plugin.name):
             print 'Name:{0}{2}\n- Description: {1}'.format(
                                     plugin.name,
