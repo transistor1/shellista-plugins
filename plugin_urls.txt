@@ -7,3 +7,4 @@ plugin|plugin|The Shellista plugins plugin - download and update Shellista plugi
 python|python|Python sub-shell plugin|https://github.com/transistor1/shellista-python.git
 ssh|ssh|SSH shell|https://github.com/briarfox/shellista-ssh.git
 pipista|pipista|Search and download modules from pypi|https://github.com/briarfox/shellista-pipista.git
+history|bashhistory|basic bash like history and history expansion|https://github.com/jsbain/shellista-bashhistory.git
